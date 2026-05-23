@@ -2,17 +2,31 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>冒险岛 MapleStory 风格小游戏</title>
 <style>
   body{margin:0;background:linear-gradient(#87ceeb,#b0e0e6);display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;font-family:"Microsoft YaHei",sans-serif;color:#fff;}
   h1{margin:6px;text-shadow:2px 2px 0 #d2691e;color:#fff8dc;}
-  #wrap{position:relative;}
-  canvas{background:linear-gradient(#87ceeb 0%,#b9e7ff 60%,#7ec850 60%,#5fa83d 100%);border:4px solid #5a3a1b;border-radius:6px;box-shadow:0 6px 20px rgba(0,0,0,.3);}
-  #ui{position:absolute;top:10px;left:14px;font-size:18px;text-shadow:1px 1px 0 #000;line-height:1.6em;}
-  #tips{margin-top:8px;color:#333;font-size:14px;text-shadow:none;}
+  #wrap{position:relative;max-width:100%;}
+  canvas{background:linear-gradient(#87ceeb 0%,#b9e7ff 60%,#7ec850 60%,#5fa83d 100%);border:4px solid #5a3a1b;border-radius:6px;box-shadow:0 6px 20px rgba(0,0,0,.3);max-width:100%;height:auto;display:block;touch-action:none;}
+  #ui{position:absolute;top:10px;left:14px;font-size:16px;text-shadow:1px 1px 0 #000;line-height:1.6em;}
+  #tips{margin-top:8px;color:#333;font-size:13px;text-shadow:none;text-align:center;padding:0 8px;}
   #overlay{position:absolute;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;background:rgba(0,0,0,.55);color:#fff;border-radius:4px;}
   #overlay h2{font-size:44px;margin:8px;}
   #overlay button{padding:8px 24px;font-size:18px;background:#ffcc33;border:2px solid #d2691e;border-radius:6px;cursor:pointer;}
+  /* 手机触屏控制 */
+  #touch{display:none;width:100%;max-width:800px;margin-top:10px;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;}
+  #touch .row{display:flex;justify-content:space-between;align-items:center;}
+  .tbtn{width:64px;height:64px;background:rgba(255,255,255,.7);border:3px solid #5a3a1b;border-radius:50%;font-size:22px;font-weight:bold;color:#5a3a1b;display:flex;align-items:center;justify-content:center;touch-action:none;}
+  .tbtn:active,.tbtn.active{background:#ffcc33;}
+  .tbtn.big{width:78px;height:78px;font-size:18px;}
+  #left-pad{display:flex;gap:14px;}
+  #right-pad{display:flex;gap:14px;}
+  @media (pointer:coarse), (max-width:840px){
+    #touch{display:block;}
+    #tips{font-size:12px;}
+    h1{font-size:20px;margin:4px;}
+  }
 </style>
 </head>
 <body>
@@ -29,7 +43,21 @@
     <button onclick="location.reload()">再来一次</button>
   </div>
 </div>
-<div id="tips">操作：← → 移动 ｜ ↑ / 空格 跳跃 ｜ X / J 挥剑</div>
+<div id="tips">键盘：← → 移动 ｜ ↑/空格 跳 ｜ X/J 挥剑</div>
+
+<!-- 手机触屏按钮 -->
+<div id="touch">
+  <div class="row">
+    <div id="left-pad">
+      <div class="tbtn" data-key="arrowleft">◀</div>
+      <div class="tbtn" data-key="arrowright">▶</div>
+    </div>
+    <div id="right-pad">
+      <div class="tbtn big" data-key="x">挥剑</div>
+      <div class="tbtn big" data-key="arrowup">跳</div>
+    </div>
+  </div>
+</div>
 
 <script>
 const cvs = document.getElementById('game');
@@ -39,6 +67,21 @@ const W = cvs.width, H = cvs.height;
 const keys = {};
 addEventListener('keydown', e => { keys[e.key.toLowerCase()] = true; if(['arrowleft','arrowright','arrowup',' '].includes(e.key.toLowerCase()))e.preventDefault(); });
 addEventListener('keyup',   e => { keys[e.key.toLowerCase()] = false; });
+
+// 手机触屏按钮绑定
+document.querySelectorAll('.tbtn').forEach(btn => {
+  const k = btn.dataset.key;
+  const press = e => { e.preventDefault(); keys[k] = true; btn.classList.add('active'); };
+  const release = e => { e.preventDefault(); keys[k] = false; btn.classList.remove('active'); };
+  btn.addEventListener('touchstart', press, {passive:false});
+  btn.addEventListener('touchend',   release, {passive:false});
+  btn.addEventListener('touchcancel',release, {passive:false});
+  btn.addEventListener('mousedown',  press);
+  btn.addEventListener('mouseup',    release);
+  btn.addEventListener('mouseleave', release);
+});
+// 防止页面滚动/缩放
+document.addEventListener('touchmove', e => { if(e.target.closest('.tbtn')||e.target.tagName==='CANVAS') e.preventDefault(); }, {passive:false});
 
 const GROUND_Y = H - 50;
 
